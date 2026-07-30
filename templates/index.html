@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>وحدة تحكم الروبوت</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --panel: #12181f;
+      --panel-raised: #1a222c;
+      --steel: #2a3540;
+      --steel-light: #3a4750;
+      --text: #e8edf2;
+      --text-dim: #6b7684;
+      --lcd-green: #4ade80;
+      --lcd-glow: rgba(74, 222, 128, 0.35);
+      --amber: #ffb020;
+      --stop-red: #ff4d4f;
+      --stop-red-dim: #7a1f20;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(ellipse at top, #131a22 0%, var(--bg) 60%);
+      font-family: 'IBM Plex Sans Arabic', Arial, sans-serif;
+      color: var(--text);
+      padding: 24px 16px;
+    }
+
+    .console {
+      width: 100%;
+      max-width: 360px;
+      background: var(--panel);
+      border: 1px solid var(--steel);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    .console-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+
+    .title {
+      font-size: 17px;
+      font-weight: 700;
+      margin: 2px 0 0;
+    }
+
+    .conn-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--lcd-green);
+      box-shadow: 0 0 8px var(--lcd-glow);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.4;
+      }
+    }
+
+    /* شاشة LCD */
+    .lcd {
+      background: #05130a;
+      border: 1px solid #163823;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 22px;
+      font-family: 'JetBrains Mono', monospace;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .lcd::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(0deg,
+          rgba(74, 222, 128, 0.03) 0px,
+          rgba(74, 222, 128, 0.03) 1px,
+          transparent 1px,
+          transparent 3px);
+      pointer-events: none;
+    }
+
+    .lcd-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--lcd-green);
+      font-size: 13px;
+      text-shadow: 0 0 6px var(--lcd-glow);
+    }
+
+    .lcd-label {
+      color: #2f8a54;
+      font-size: 11px;
+    }
+
+    .lcd-value {
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .lcd-log {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed #163823;
+      font-size: 11px;
+      color: #2f8a54;
+      min-height: 16px;
+    }
+
+    /* D-Pad */
+    .dpad {
+      display: grid;
+      grid-template-columns: 72px 72px 72px;
+      grid-template-rows: 72px 72px 72px;
+      gap: 10px;
+      justify-content: center;
+      margin: 0 auto;
+      direction: ltr;
+    }
+
+    .pad-btn {
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(180deg, var(--panel-raised), #141b23);
+      border: 1px solid var(--steel);
+      box-shadow: 0 4px 0 var(--steel), 0 6px 10px rgba(0, 0, 0, 0.4);
+      color: var(--text);
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .pad-btn:active,
+    .pad-btn.pressed {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 var(--steel), 0 2px 4px rgba(0, 0, 0, 0.4);
+      color: var(--amber);
+      border-color: var(--amber);
+    }
+
+    .pad-forward {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .pad-left {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .pad-right {
+      grid-column: 3;
+      grid-row: 2;
+    }
+
+    .pad-backward {
+      grid-column: 2;
+      grid-row: 3;
+    }
+
+    .pad-stop {
+      grid-column: 2;
+
+      grid-row: 2;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #ff7375, var(--stop-red) 70%);
+      border: 2px solid #a83234;
+      box-shadow: 0 4px 0 var(--stop-red-dim), 0 6px 14px rgba(255, 77, 79, 0.35);
+      color: #2a0808;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
+
+    .pad-stop:active,
+    .pad-stop.pressed {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 var(--stop-red-dim), 0 2px 6px rgba(255, 77, 79, 0.3);
+    }
+
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      margin-top: 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .legend span {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-dim);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="console">
+    <div class="console-header">
+      <div>
+        <div class="eyebrow">ROBOT CONTROL UNIT</div>
+        <div class="title">وحدة تحكم الروبوت</div>
+      </div>
+      <div class="conn-dot" id="connDot"></div>
+    </div>
+
+    <div class="lcd">
+      <div class="lcd-row">
+        <span class="lcd-label">STATUS</span>
+        <span class="lcd-value" id="statusValue">STANDBY</span>
+      </div>
+      <div class="lcd-row" style="margin-top:6px;">
+        <span class="lcd-label">CMD</span>
+        <span class="lcd-value" id="cmdValue">— — —</span>
+      </div>
+      <div class="lcd-log" id="lcdLog">جاهز لاستقبال الأوامر</div>
+    </div>
+
+    <div class="dpad">
+      <button class="pad-btn pad-forward" onclick="sendCommand('forward')" aria-label="أمام">▲</button>
+      <button class="pad-btn pad-left" onclick="sendCommand('left')" aria-label="يسار">◀</button>
+      <button class="pad-btn pad-stop" onclick="sendCommand('stop')" aria-label="إيقاف">STOP</button>
+      <button class="pad-btn pad-right" onclick="sendCommand('right')" aria-label="يمين">▶</button>
+      <button class="pad-btn pad-backward" onclick="sendCommand('backward')" aria-label="خلف">▼</button>
+    </div>
+
+    <div class="legend">
+      <span><span class="legend-dot"></span> اتجاهات الحركة</span>
+      <span><span class="legend-dot" style="background:var(--stop-red)"></span> إيقاف طارئ</span>
+    </div>
+  </div>
+
+  <script>
+    const labels = {
+      forward: "FORWARD",
+      backward: "BACKWARD",
+      left: "LEFT",
+      right: "RIGHT",
+      stop: "STOP"
+    };
+
+    function sendCommand(cmd) {
+      const statusEl = document.getElementById('statusValue');
+      const cmdEl = document.getElementById('cmdValue');
+      const logEl = document.getElementById('lcdLog');
+      const dotEl = document.getElementById('connDot');
+
+      statusEl.textContent = 'SENDING...';
+
+      fetch('/update_command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'command=' + encodeURIComponent(cmd)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'success') {
+            statusEl.textContent = cmd === 'stop' ? 'STOPPED' : 'MOVING';
+            cmdEl.textContent = labels[cmd] + '  →  "' + data.stored_as + '"';
+            logEl.textContent = 'تم إرسال الأمر بنجاح: ' + labels[cmd];
+            dotEl.style.background = 'var(--lcd-green)';
+          } else {
+            statusEl.textContent = 'ERROR';
+            logEl.textContent = 'خطأ: ' + data.message;
+            dotEl.style.background = 'var(--stop-red)';
+          }
+        })
+        .catch(() => {
+          statusEl.textContent = 'OFFLINE';
+          logEl.textContent = 'تعذر الاتصال بالسيرفر';
+          dotEl.style.background = 'var(--stop-red)';
+        });
+    }
+  </script>
+
+</body>
+
+</html>
